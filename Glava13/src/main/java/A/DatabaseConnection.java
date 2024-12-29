@@ -8,8 +8,14 @@ public class DatabaseConnection {
     private static final String URL = "jdbc:h2:./watchstore";
     private static final String USER = "sa";
     private static final String PASSWORD = "";
+    private static Connection connection;
 
-    public static Connection getConnection() throws SQLException {
-        return DriverManager.getConnection(URL, USER, PASSWORD);
+    private DatabaseConnection() {}
+
+    public static Connection getInstance() throws SQLException {
+        if (connection == null || connection.isClosed()) {
+            connection = DriverManager.getConnection(URL, USER, PASSWORD);
+        }
+        return connection;
     }
 }

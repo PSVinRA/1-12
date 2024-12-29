@@ -2,6 +2,7 @@ package A;
 import A.DatabaseInitializer;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
+import java.sql.Connection;
 import java.util.List;
 import static org.junit.jupiter.api.Assertions.*;
 //Романов Альберт Б762-2 Вариант 9
@@ -11,8 +12,16 @@ class WatchStoreQueriesTest {
 
     @BeforeAll
     static void setup() {
-        DatabaseInitializer.initialize();
-        queries = new WatchStoreQueries();
+        try {
+            DatabaseInitializer.initialize();
+
+            Connection connection = DatabaseConnection.getInstance();
+
+            queries = new WatchStoreQueries(connection);
+        } catch (Exception e) {
+            e.printStackTrace();
+            fail("Не удалось настроить базу данных и запросы.");
+        }
     }
 
     @Test

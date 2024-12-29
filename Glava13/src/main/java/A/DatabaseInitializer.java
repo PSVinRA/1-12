@@ -4,7 +4,7 @@ import java.sql.Statement;
 //Романов Альберт Б762-2 Вариант 9
 public class DatabaseInitializer {
     public static void initialize() {
-        try (Connection conn = DatabaseConnection.getConnection();
+        try (Connection conn = DatabaseConnection.getInstance();
              Statement stmt = conn.createStatement()) {
 
             stmt.execute("CREATE TABLE IF NOT EXISTS Manufacturer (" +
