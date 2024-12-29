@@ -5,6 +5,7 @@ import java.util.Comparator;
 import java.util.List;
 //Романов Альберт Б762-2 Вариант 9
 public class Airline implements Serializable {
+    private static final long serialVersionUID = 1L;
     private List<Airplane> airplanes = new ArrayList<>();
 
     public void addAirplane(Airplane airplane) {
@@ -32,5 +33,17 @@ public class Airline implements Serializable {
             }
         }
         return result;
+    }
+
+    public void saveToFile(String filePath) throws IOException {
+        try (ObjectOutputStream oos = new ObjectOutputStream(new FileOutputStream(filePath))) {
+            oos.writeObject(this);
+        }
+    }
+
+    public static Airline loadFromFile(String filePath) throws IOException, ClassNotFoundException {
+        try (ObjectInputStream ois = new ObjectInputStream(new FileInputStream(filePath))) {
+            return (Airline) ois.readObject();
+        }
     }
 }
