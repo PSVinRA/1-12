@@ -11,13 +11,20 @@ import java.util.Locale;
 //Романов Альберт Б762-2 Вариант 9
 public class NumberProcessor {
 
+    private static final int MAX_LINES = 1_000_000;
+
     public static List<Double> processFile(String filePath) throws IOException, InvalidNumberException {
         List<Double> numbers = new ArrayList<>();
 
         try (BufferedReader reader = new BufferedReader(new FileReader(filePath))) {
             String line;
+            int lineCount = 0;
 
             while ((line = reader.readLine()) != null) {
+                if (++lineCount > MAX_LINES) {
+                    throw new IOException("Файл слишком большой для обработки. Максимальное количество строк: " + MAX_LINES);
+                }
+
                 String[] parts = line.split("\\|");
                 if (parts.length != 2) {
                     throw new InvalidNumberException("Недопустимый формат строки: " + line);
@@ -40,8 +47,6 @@ public class NumberProcessor {
                     throw new InvalidNumberException("Не удалось разобрать номер: " + numberString);
                 }
             }
-        } catch (OutOfMemoryError e) {
-            throw new IOException("Не хватает памяти при обработке файла.", e);
         }
 
         return numbers;
