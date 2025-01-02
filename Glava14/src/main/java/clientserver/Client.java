@@ -1,15 +1,14 @@
 package clientserver;
 import java.io.*;
 import java.net.Socket;
-import java.io.BufferedReader;
-import java.io.IOException;
-import java.io.InputStreamReader;
 import java.util.Scanner;
 //Романов Альберт Б762-2 Вариант 1
 public class Client {
     private final String serverHost;
     private final int serverPort;
     private String username;
+    private PrintWriter writer;
+    private BufferedReader reader;
 
     public Client(String serverHost, int serverPort) {
         this.serverHost = serverHost;
@@ -20,17 +19,52 @@ public class Client {
         this.username = username;
     }
 
-    public void sendMessage(String recipient, String message) throws IOException {
-        try (var socket = new Socket(serverHost, serverPort);
-             var writer = new PrintWriter(socket.getOutputStream(), true);
-             var reader = new BufferedReader(new InputStreamReader(socket.getInputStream()))) {
+    public void start() {
+        try (Socket socket = new Socket(serverHost, serverPort)) {
+            writer = new PrintWriter(socket.getOutputStream(), true);
+            reader = new BufferedReader(new InputStreamReader(socket.getInputStream()));
 
             writer.println("ОТ: " + username);
-            writer.println("ДЛЯ: " + recipient);
-            writer.println("СООБЩЕНИЕ: " + message);
 
-            System.out.println("Ответ сервера: " + reader.readLine());
+            Thread listener = new Thread(() -> {
+                try {
+                    String incomingMessage;
+                    while ((incomingMessage = reader.readLine()) != null) {
+                        System.out.println(incomingMessage);
+                    }
+                } catch (IOException e) {
+                    System.err.println("Соединение закрыто.");
+                }
+            });
+            listener.start();
+
+            try (Scanner scanner = new Scanner(System.in)) {
+                while (true) {
+                    System.out.print("Введите имя получателя: ");
+                    String recipient = scanner.nextLine();
+
+                    System.out.print("Введите сообщение: ");
+                    String message = scanner.nextLine();
+
+                    sendMessage(recipient, message);
+
+                    System.out.print("Хотите отправить ещё сообщение? (да/нет): ");
+                    String response = scanner.nextLine();
+                    if (!response.equalsIgnoreCase("да")) {
+                        System.out.println("Клиент завершает работу.");
+                        break;
+                    }
+                }
+            }
+
+        } catch (IOException e) {
+            System.err.println("Ошибка клиента: " + e.getMessage());
         }
+    }
+
+    public void sendMessage(String recipient, String message) {
+        writer.println("ДЛЯ: " + recipient);
+        writer.println("СООБЩЕНИЕ: " + message);
     }
 
     public static void main(String[] args) {
@@ -48,27 +82,7 @@ public class Client {
             String username = scanner.nextLine();
             client.setUsername(username);
 
-            System.out.println("Клиент готов отправлять сообщения.");
-            while (true) {
-                System.out.print("Введите имя получателя: ");
-                String recipient = scanner.nextLine();
-
-                System.out.print("Введите сообщение: ");
-                String message = scanner.nextLine();
-
-                client.sendMessage(recipient, message);
-
-                System.out.print("Хотите отправить ещё сообщение? (да/нет): ");
-                String response = scanner.nextLine();
-                if (!response.equalsIgnoreCase("да")) {
-                    System.out.println("Клиент завершает работу.");
-                    break;
-                }
-            }
-        } catch (Exception e) {
-            System.err.println("Ошибка клиента: " + e.getMessage());
+            client.start();
         }
     }
 }
-
-

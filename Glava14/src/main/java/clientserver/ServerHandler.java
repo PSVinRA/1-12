@@ -1,11 +1,10 @@
 package clientserver;
 import java.io.*;
 import java.net.Socket;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 //Романов Альберт Б762-2 Вариант 1
 public class ServerHandler implements Runnable {
-    private static final Map<String, Socket> clients = new HashMap<>();
+    private static final ConcurrentHashMap<String, PrintWriter> clients = new ConcurrentHashMap<>();
     private final Socket clientSocket;
 
     public ServerHandler(Socket clientSocket) {
@@ -18,22 +17,33 @@ public class ServerHandler implements Runnable {
              PrintWriter writer = new PrintWriter(clientSocket.getOutputStream(), true)) {
 
             String from = reader.readLine().split(": ")[1];
-            String to = reader.readLine().split(": ")[1];
-            String message = reader.readLine().split(": ")[1];
 
-            clients.put(from, clientSocket);
+            clients.put(from, writer);
+            System.out.println("Зарегистрированные клиенты: " + clients.keySet());
+            System.out.println("Клиент " + from + " подключился.");
 
-            if (clients.containsKey(to)) {
-                try (PrintWriter toWriter = new PrintWriter(clients.get(to).getOutputStream(), true)) {
-                    toWriter.println("Сообщение от " + from + ": " + message);
+            String to;
+            String message;
+
+            while (true) {
+                try {
+                    to = reader.readLine().split(": ")[1];
+                    message = reader.readLine().split(": ")[1];
+
+                    if (clients.containsKey(to)) {
+                        clients.get(to).println("Сообщение от " + from + ": " + message);
+                        writer.println("Сообщение доставлено.");
+                    } else {
+                        writer.println("Получатель не найден.");
+                    }
+                } catch (NullPointerException e) {
+                    System.out.println("Клиент " + from + " отключился.");
+                    clients.remove(from);
+                    break;
                 }
-                writer.println("Сообщение доставлено.");
-            } else {
-                writer.println("Получатель не найден.");
             }
         } catch (IOException e) {
             e.printStackTrace();
         }
     }
 }
-
